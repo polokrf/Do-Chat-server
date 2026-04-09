@@ -52,12 +52,12 @@ router.post('/google', async (req, res) => {
     const db=getDB()
     const body = req.body;
     if (!body.email) {
-      return res.status(400).send({ message: 'plz give your email' });
+      return res.send({ message: 'plz give your email' });
     }
     const query = { email: body.email };
     const user = await db.collection('userCollection').findOne(query)
     if (user) {
-        return res.send({ message: 'User already exists' });
+        return res.send({id:user?._id,role:user?.role});
       }
     const newUser = {
       email: body.email,
@@ -68,7 +68,11 @@ router.post('/google', async (req, res) => {
       createAt: new Date(),
     };
     const result = await db.collection('userCollection').insertOne(newUser)
-    res.send(result);
+    
+    res.send({id: result?.insertedId,role:'user' });
+    
+
+   
   } catch (error) {
     console.log(error)
     res.status(500).send({message:'server error'})
