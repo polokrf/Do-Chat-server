@@ -18,13 +18,17 @@ router.post('/login', async (req, res) => {
     const query = { email: email };
     const user = await db.collection('userCollection').findOne(query);
     if (!user) {
-      return res.send({ message: 'user not exists' });
+      return res.status(401).send({ message: 'user not exists' });
+    }
+    if (!user.password) {
+      return res.status(404).send({ message: 'password not found' });
     }
     const cmpPassword = await bcrypt.compare(password, user.password);
     if (!cmpPassword) {
       return res.send({ message: 'wrong password' });
     }
     const newData = {
+      userId:user?._id,
       email: user.email,
       name: user.name,
       image: user.image,
@@ -48,12 +52,12 @@ router.post('/google', async (req, res) => {
     const db=getDB()
     const body = req.body;
     if (!body.email) {
-      return res.send({ message: 'plz give your email' });
+      return res.status(400).send({ message: 'plz give your email' });
     }
     const query = { email: body.email };
     const user = await db.collection('userCollection').findOne(query)
     if (user) {
-        return res.send({ message: 'User already exists'});
+        return res.send({ message: 'User already exists' });
       }
     const newUser = {
       email: body.email,

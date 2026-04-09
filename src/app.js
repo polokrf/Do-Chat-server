@@ -3,6 +3,7 @@ const app = express();
 const cors = require('cors');
 const auth =require('./routes/auth.route')
 const users =require('./routes/users.route')
+const friendRequests =require('./routes/friendRequests.route')
 
 // middle wear
 app.use(express.json());
@@ -15,6 +16,8 @@ app.get('/',(req, res) => {
 app.use('/auth', auth)
 // get users
 app.use('/users',users)
+// get friend request
+app.use('/friendRequests',friendRequests)
 
 
 
