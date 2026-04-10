@@ -2,6 +2,53 @@ const express = require('express');
 const { getDB } = require('../db');
 const router = express.Router();
 
+
+// get sender request
+router.get('/senderRequest', async (req, res) => {
+ try {
+   const db = getDB();
+   const { userId } = req.query;
+   const query = { senderId: userId, status: 'pending' };
+   const result = await db.collection('friendRequests').find(query).toArray();
+   res.send(result);
+ } catch (error) {
+   console.log(error)
+   res.status(500).send({message:'server error'})
+ }
+
+})
+// get Received request
+router.get('/received', async (req, res) => {
+  try {
+    const db = getDB();
+    const { userId } = req.query;
+    const query = { receiverId: userId, status: 'pending' };
+    const result = await db.collection('friendRequests').find(query).toArray();
+    res.send(result);
+  } catch (error) {
+     console.log(error);
+     res.status(500).send({ message: 'server error' });
+  }
+});
+// get friends 
+router.get('/friends', async (req, res) => {
+  try {
+    const db = getDB();
+    const { userId } = req.query;
+    const query = {
+      $or: [
+        { senderId: userId, status: 'accepted' },
+        { receiverId: userId, status:'accepted'},
+      ],
+    };
+    const result = await db.collection('friendRequests').find(query).toArray();
+    res.send(result);
+  } catch (error) {
+     console.log(error);
+     res.status(500).send({ message: 'server error' });
+  }
+});
+
 // send friend requests
 router.post('/', async (req, res) => {
  try {
