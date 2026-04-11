@@ -1,5 +1,6 @@
 const express = require('express');
 const { getDB } = require('../db');
+const { ObjectId } = require('mongodb');
 const router = express.Router();
 
 
@@ -84,6 +85,44 @@ router.post('/', async (req, res) => {
    res.status(500).send({message:'server error'})
  }
 })
+
+// we  want to accept friend request
+router.patch('/accept', async (req, res) => {
+  try {
+    const db = getDB();
+    const { userId, targetId } = req.body;
+    if (!userId || !targetId) {
+      return res.status(400).send({ message: 'Missing id' });
+    }
+    const query = {senderId: targetId,receiverId:userId,status:'pending'};
+    const update = {
+      $set: {
+        status: 'accepted',
+      },
+    };
+    const result = await db.collection('friendRequests').updateOne(query, update);
+    res.send(result);
+  } catch (error) {
+    
+  }
+})
+
+// friend request delete cancel unfriend
+router.delete('/delete', async (req, res) => {
+  try {
+    const db = getDB();
+    const { targetId } = req.query;
+    const query = {  $or:[{ senderId: targetId},{receiverId: targetId}] };
+    const result = await db.collection('friendRequests').deleteOne(query);
+    res.send(result);
+  } catch (error) {
+    console.log(error)
+    res.status(500).send({ message: 'server error' })
+  }
+
+});
+
+
 
 
 module.exports = router;

@@ -2,7 +2,7 @@ const express = require('express');
 const { getDB } = require('../db');
 const router = express.Router();
 
-// get all users
+// search then get all users
 router.get('/', async (req, res) => {
   const db = getDB();
   const { name } = req.query;
@@ -18,6 +18,7 @@ router.get('/', async (req, res) => {
   
   res.send(result)
 })
+
 
 
 

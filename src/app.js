@@ -4,6 +4,8 @@ const cors = require('cors');
 const auth =require('./routes/auth.route')
 const users =require('./routes/users.route')
 const friendRequests =require('./routes/friendRequests.route')
+const friends =require('./routes/friendsList.route')
+const requests =require('./routes/requests.route')
 
 // middle wear
 app.use(express.json());
@@ -12,12 +14,17 @@ app.use(cors())
 app.get('/',(req, res) => {
   res.send({message:'server is conect'})
 })
+
 // auth login register
 app.use('/auth', auth)
 // get users
 app.use('/users',users)
-// get friend request
-app.use('/friendRequests',friendRequests)
+// who friend request
+app.use('/requests', requests)
+// manage friend request
+app.use('/friendRequests', friendRequests)
+// get friends 
+app.use('/friends',friends)
 
 
 
