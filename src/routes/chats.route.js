@@ -35,7 +35,7 @@ router.get('/messages', async (req, res) => {
        { senderId: receiverId, receiverId: senderId },
      ],
    };
-   const result = await db.collection('messages').find(query).sort({ createdAt: 1 }).limit(10).toArray();
+   const result = await db.collection('messages').find(query).sort({ createdAt: 1 }).toArray();
    res.send(result);
  } catch (error) {
    console.log(error);
@@ -66,6 +66,7 @@ router.get('/chat-list', async (req, res) => {
          messages.map(m => (m.senderId === userId ? m.receiverId : m.senderId)),
        ),
     ];
+    
     
     
      const secondQuery = {
