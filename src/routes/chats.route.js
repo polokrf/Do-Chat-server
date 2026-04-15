@@ -35,8 +35,8 @@ router.get('/messages', async (req, res) => {
        { senderId: receiverId, receiverId: senderId },
      ],
    };
-   const result = await db.collection('messages').find(query).sort({ createdAt: 1 }).toArray();
-   res.send(result);
+   const result = await db.collection('messages').find(query).sort({ createdAt: -1 }).limit(15).toArray();
+   res.send(result.reverse());
  } catch (error) {
    console.log(error);
    res.status(500).send({ message: 'server error' });
@@ -120,7 +120,7 @@ router.post('/send-message', async (req, res) => {
     };
 
     const result = await db.collection('messages').insertOne(newMessage);
-    res.status(200).send(result)
+    res.status(200).send({ ...newMessage, _id: result.insertedId });
 
  } catch (error) {
   console.log(error);

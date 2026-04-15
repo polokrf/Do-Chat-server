@@ -24,15 +24,16 @@ io.on('connection', socket => {
   // if user connect  then run
   socket.on('join', userId => {
     users[userId] = socket.id;
-    console.log('users', users, userId);
+    
   });
 
   // send message
   socket.on('sendMessage', data => {
     const { senderId, receiverId, message } = data;
+    if (!senderId || !receiverId || !message) return;
     const receiverSocketId = users[receiverId];
 
-    console.log('receverid ',users,receiverId)
+    
     if (receiverSocketId) {
       socket.to(receiverSocketId).emit('receiveMessage', {
         senderId,
