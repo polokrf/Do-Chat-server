@@ -53,7 +53,7 @@ router.get('/chat-list', async (req, res) => {
       return res.status(400).send({ message: 'id is missing' });
     }
     const query = {
-      isRequest: false,
+      
       $or: [{ senderId: userId }, { receiverId: userId }],
     };
     const messages = await db.collection('messages').find(query).sort({ createdAt: -1 }).toArray();
@@ -172,6 +172,44 @@ router.post('/send-message', async (req, res) => {
   res.status(500).send({ message: 'server error' });
  }
 })
+
+
+// message request accept or delete 
+router.patch('/accept-delete', async (req, res) => {
+  try {
+    const db = getDB();
+    const { userId, requestId, action } = req.body;
+    const query = {
+      isRequest: true,
+      $or: [
+        { senderId: userId, receiverId: requestId },
+        { senderId: requestId, receiverId: userId }
+      ]
+    };
+    
+    if (action === 'accept') {
+      const update = {
+        $set: {
+          isRequest:false
+        }
+      }
+       const updateMegReq = await db.collection('messages').updateMany(query, update);
+       return res.send(updateMegReq);
+     
+    };
+
+    if (action === 'delete') {
+     const deleteMegReq = await db.collection('messages').deleteMany(query);
+     return  res.send(deleteMegReq);
+    }
+    
+     res.status(400).send({ message: 'Invalid action' });
+    
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({ message: 'server error' });
+  }
+});
 
 
 
