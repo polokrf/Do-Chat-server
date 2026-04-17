@@ -1,7 +1,7 @@
 const { createServer } = require('node:http');
 require('dotenv').config();
 const app = require('./src/app');
-const { connectDB } = require('./src/db'); //server connect
+const { connectDB, getDB } = require('./src/db'); //server connect
 const { Server } = require('socket.io');
 const port = process.env.PORT || 5000;
 
@@ -31,18 +31,17 @@ io.on('connection', socket => {
   });
 
   // send message
-  socket.on('sendMessage', data => {
+  socket.on('sendMessage',(data) => {
     const { senderId, receiverId, message } = data;
     if (!senderId || !receiverId || !message) return;
     const receiverSocketId = users[receiverId];
-
-    
-    if (receiverSocketId) {
+   if (receiverSocketId) {
       socket.to(receiverSocketId).emit('receiveMessage', {
         senderId,
         message,
         receiverId,
         createdAt: new Date(),
+        
         
       });
     }
