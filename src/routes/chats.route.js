@@ -140,10 +140,18 @@ router.post('/send-message', async (req, res) => {
        return res.status(400).send({ message: 'message is required' });
      }
     
-    const query = { $or: [{ senderId:senderId,receiverId:receiverId},{senderId:receiverId,receiverId:senderId}] };
-    const friend = await db.collection('friendRequests').findOne(query)
+    const query = {status:'accepted', $or: [{ senderId:senderId,receiverId:receiverId},{senderId:receiverId,receiverId:senderId}] };
+    const friend = await db.collection('friendRequests').findOne(query);
+    // already accept message request yes or no  check 
+    const existingChatCount = await db.collection('messages').countDocuments({
+      $or: [
+        { senderId, receiverId, isRequest: false },
+        { senderId: receiverId, receiverId: senderId, isRequest: false },
+      ],
+    });
+     const existingChat = existingChatCount > 0;
     let isRequest = true;
-    if (friend?.status === 'accepted') {
+   if (friend || existingChat) {
       isRequest = false;
     }
 

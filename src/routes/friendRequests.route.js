@@ -113,7 +113,7 @@ router.patch('/accept', async (req, res) => {
         isRequest:false,
       }
     }
-    const messRequestUpdate = await db.collection('messages').insertOne(scQuery,scUpdate)
+    const messRequestUpdate = await db.collection('messages').updateMany(scQuery,scUpdate)
     res.send(result);
   } catch (error) {
     
