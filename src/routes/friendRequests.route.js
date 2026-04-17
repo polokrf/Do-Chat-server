@@ -101,6 +101,19 @@ router.patch('/accept', async (req, res) => {
       },
     };
     const result = await db.collection('friendRequests').updateOne(query, update);
+    const scQuery = {
+      isRequest: true,
+      $or: [
+        { senderId: userId, receiverId: targetId },
+        { senderId: targetId, receiverId: userId },
+      ],
+    };
+    const scUpdate = {
+      $set: {
+        isRequest:false,
+      }
+    }
+    const messRequestUpdate = await db.collection('messages').insertOne(scQuery,scUpdate)
     res.send(result);
   } catch (error) {
     
