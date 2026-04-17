@@ -53,8 +53,7 @@ router.get('/chat-list', async (req, res) => {
       return res.status(400).send({ message: 'id is missing' });
     }
     const query = {
-      
-      $or: [{ senderId: userId }, { receiverId: userId }],
+      $or: [{ senderId: userId, receiverId: userId, isRequest: false }, {senderId:userId}],
     };
     const messages = await db.collection('messages').find(query).sort({ createdAt: -1 }).toArray();
     if (messages.length === 0) {
