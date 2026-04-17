@@ -29,10 +29,10 @@ router.get('/messages', async (req, res) => {
      return res.status(400).send({ message: 'senderId & receiverId required' });
    }
    const query = {
-     isRequest: false,
      $or: [
-       { senderId: senderId, receiverId: receiverId },
-       { senderId: receiverId, receiverId: senderId },
+       { senderId: senderId, receiverId: receiverId},
+       { senderId: receiverId, receiverId: senderId, isRequest: false },
+     
      ],
    };
    const result = await db.collection('messages').find(query).sort({ createdAt: -1 }).limit(15).toArray();
@@ -53,7 +53,7 @@ router.get('/chat-list', async (req, res) => {
       return res.status(400).send({ message: 'id is missing' });
     }
     const query = {
-      $or: [{ senderId: userId, receiverId: userId, isRequest: false }, {senderId:userId}],
+      $or: [{ senderId: userId }, { receiverId: userId, isRequest: false}],
     };
     const messages = await db.collection('messages').find(query).sort({ createdAt: -1 }).toArray();
     if (messages.length === 0) {
@@ -74,13 +74,16 @@ router.get('/chat-list', async (req, res) => {
     const users = await db.collection('userCollection').find(secondQuery, { projection: { password: 0 } }).toArray();
     
     const chatList = users.map((user) => {
-      const lastText = messages.find(m => (m.senderId === userId && m.receiverId === user._id.toString()) || (m.senderId === user._id.toString() && m.receiverId === userId));
+      const userMessages = messages.filter(m => (m.senderId === userId && m.receiverId === user._id.toString()) || (m.senderId === user._id.toString() && m.receiverId === userId));
+      const lastText = userMessages[0];
       return {
         ...user,
         lastMessage: lastText?.message,
         lastSeen: lastText?.createdAt
       }
     })
+    
+
 
     res.send(chatList);
   } catch (error) {
@@ -110,7 +113,8 @@ router.get('/message-request-list', async (req, res) => {
     const isRequesterUsers = await db.collection('userCollection').find(sedQuery, { projection: { password: 0 } }).toArray()
 
     const users = isRequesterUsers.map(user => {
-      const lastMessage = isFriendRequest.find(meg=>meg.senderId === user._id.toString() && meg.isRequest === true);
+      const  userMessages = isFriendRequest.filter(meg => meg.senderId === user._id.toString() && meg.isRequest === true);
+      const lastMessage = userMessages[0];
       return {
         ...user,
         lastMessage: lastMessage.message,
