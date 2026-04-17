@@ -47,31 +47,31 @@ router.get('/messages', async (req, res) => {
 
 router.get('/chat-list', async (req, res) => {
   try {
-     const db = getDB();
-     const { userId } = req.query;
-     if (!userId) {
-       return res.status(400).send({ message: 'id is missing' });
-     }
-     const query = {
-       isRequest: false,
-       $or: [{ senderId: userId }, { receiverId: userId }],
-     };
-     const messages = await db.collection('messages').find(query).sort({createdAt:-1}).toArray();
-     if (messages.length === 0) {
-       return res.send([]);
+    const db = getDB();
+    const { userId } = req.query;
+    if (!userId) {
+      return res.status(400).send({ message: 'id is missing' });
+    }
+    const query = {
+      isRequest: false,
+      $or: [{ senderId: userId }, { receiverId: userId }],
+    };
+    const messages = await db.collection('messages').find(query).sort({ createdAt: -1 }).toArray();
+    if (messages.length === 0) {
+      return res.send([]);
     }
    
-     const findMessageId = [
-       ...new Set(
-         messages.map(m => (m.senderId === userId ? m.receiverId : m.senderId)),
-       ),
+    const findMessageId = [
+      ...new Set(
+        messages.map(m => (m.senderId === userId ? m.receiverId : m.senderId)),
+      ),
     ];
     
     
     
-     const secondQuery = {
-       _id: { $in: findMessageId.map(id => new ObjectId(id)) },
-     };
+    const secondQuery = {
+      _id: { $in: findMessageId.map(id => new ObjectId(id)) },
+    };
     const users = await db.collection('userCollection').find(secondQuery, { projection: { password: 0 } }).toArray();
     
     const chatList = users.map((user) => {
@@ -79,7 +79,7 @@ router.get('/chat-list', async (req, res) => {
       return {
         ...user,
         lastMessage: lastText?.message,
-        lastSeen:lastText?.createdAt
+        lastSeen: lastText?.createdAt
       }
     })
 
@@ -88,7 +88,44 @@ router.get('/chat-list', async (req, res) => {
     console.log(error);
     res.status(500).send({ message: 'server error' });
   }
+});
+
+// message request list
+
+router.get('/message-request-list', async (req, res) => {
+  try {
+    const db = getDB();
+    const { userId } = req.query;
+    if (!userId) {
+      return res.status(400).send({ message: 'id is missing' });
+    }
+    const query = {receiverId: userId ,isRequest:true};
+    const isFriendRequest = await db.collection('messages').find(query).sort({createdAt: -1}).toArray();
+     if (isFriendRequest.length === 0) {
+       return res.send([]);
+     }
+    const RequesterId = isFriendRequest.map(r => r.senderId);
+
+    const sedQuery={_id:{$in:RequesterId.map(id=> new ObjectId(id))}}
+
+    const isRequesterUsers = await db.collection('userCollection').find(sedQuery, { projection: { password: 0 } }).toArray()
+
+    const users = isRequesterUsers.map(user => {
+      const lastMessage = isFriendRequest.find(meg=>meg.senderId === user._id.toString() && meg.isRequest === true);
+      return {
+        ...user,
+        lastMessage: lastMessage.message,
+        lastSeen:lastMessage?.createdAt
+      }
+    })
+    res.send(users)
+    
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({ message: 'server error' });
+  }
 })
+
 
 
 // send message  and message request
