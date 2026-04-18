@@ -44,7 +44,7 @@ router.get('/messages', async (req, res) => {
    const messages = await db.collection('messages').find(query).sort({ createdAt: -1 }).limit(limit).toArray();
    const nextCursor = messages.length === limit ? messages[messages.length - 1]._id : null;
    res.send({
-     messages:messages,
+     messages:messages.reverse(),
      nextCursor
    });
  } catch (error) {
