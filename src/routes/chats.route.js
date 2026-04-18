@@ -41,6 +41,7 @@ router.get('/messages', async (req, res) => {
        cursor ? { _id: { $lt: new ObjectId(cursor) } } : {},
      ],
    };
+   
    const messages = await db.collection('messages').find(query).sort({ createdAt: -1 }).limit(limit).toArray();
    const nextCursor = messages.length === limit ? messages[messages.length - 1]._id : null;
    res.send({
@@ -58,16 +59,21 @@ router.get('/messages', async (req, res) => {
 router.get('/chat-list', async (req, res) => {
   try {
     const db = getDB();
-    const { userId } = req.query;
+    const { userId,cursor } = req.query;
     if (!userId) {
       return res.status(400).send({ message: 'id is missing' });
     }
     const query = {
-      $or: [{ senderId: userId }, { receiverId: userId, isRequest: false}],
+      $and: [
+        {
+          $or: [{ senderId: userId }, { receiverId: userId, isRequest: false }],
+        },
+        cursor ? {_id:{$lt:new ObjectId(cursor)}} : {}
+      ],
     };
     const messages = await db.collection('messages').find(query).sort({ createdAt: -1 }).toArray();
     if (messages.length === 0) {
-      return res.send([]);
+      return res.send({usersChat:[],nextCursor:null});
     }
    
     const findMessageId = [
@@ -77,11 +83,11 @@ router.get('/chat-list', async (req, res) => {
     ];
     
     
-    
+    const limit = 10;
     const secondQuery = {
       _id: { $in: findMessageId.map(id => new ObjectId(id)) },
     };
-    const users = await db.collection('userCollection').find(secondQuery, { projection: { password: 0 } }).toArray();
+    const users = await db.collection('userCollection').find(secondQuery, { projection: { password: 0 } }).sort({createAt: -1}).limit(limit).toArray();
     
     const chatList = users.map((user) => {
       const userMessages = messages.filter(m => (m.senderId === userId && m.receiverId === user._id.toString()) || (m.senderId === user._id.toString() && m.receiverId === userId));
@@ -94,8 +100,11 @@ router.get('/chat-list', async (req, res) => {
     })
     
 
+    const nextCursor = users.length === limit ? users[users.length -1]._id:null
+      
 
-    res.send(chatList);
+
+    res.send({usersChat:chatList,nextCursor});
   } catch (error) {
     console.log(error);
     res.status(500).send({ message: 'server error' });
