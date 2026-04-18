@@ -24,11 +24,11 @@ router.get('/chat-user/:id', async (req, res) => {
 router.get('/messages', async (req, res) => {
  try {
    const db = getDB();
-   const { senderId, receiverId,page=1 } = req.query;
+   const { senderId, receiverId } = req.query;
    if (!senderId || !receiverId) {
      return res.status(400).send({ message: 'senderId & receiverId required' });
    }
-   let mypage = parseInt(page -1)
+  
    let limit = 15
    const query = {
      $or: [
@@ -37,7 +37,7 @@ router.get('/messages', async (req, res) => {
      
      ],
    };
-   const result = await db.collection('messages').find(query).sort({ createdAt: -1 }).skip(mypage * limit).limit(limit).toArray();
+   const result = await db.collection('messages').find(query).sort({ createdAt: -1 }).limit(limit).toArray();
    res.send(result.reverse());
  } catch (error) {
    console.log(error);
