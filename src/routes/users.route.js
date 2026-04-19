@@ -7,7 +7,7 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   const db = getDB();
   const { name, cursor } = req.query;
-  console.log(name)
+  
   if (!name || name.trim() === '') {
     return res.send([]); 
   }

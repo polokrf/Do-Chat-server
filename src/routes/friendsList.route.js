@@ -8,27 +8,32 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const db = getDB();
-    const { userId } = req.query;
+    const { userId,cursor } = req.query;
      if (!userId) {
        return res.status(400).send({ message: 'Missing id' });
      }
     const query = {
-      $or: [
-        { senderId: userId, status: 'accepted' },
-        { receiverId: userId, status: 'accepted' }
+      $and: [
+        {
+          $or: [
+            { senderId: userId, status: 'accepted' },
+            { receiverId: userId, status: 'accepted' },
+          ],
+        },
+        cursor ? {_id:{$lt:new ObjectId(cursor)}} : {}
       ],
     };
+    const limit =10
     const friendsList = await db.collection('friendRequests').find(query).toArray();
     const friendsId = friendsList.map(f => f.senderId === userId ? f.receiverId : f.senderId);
-    const friends = await db
-      .collection('userCollection')
-      .find(
+    const friends = await db.collection('userCollection').find(
         { _id: { $in: friendsId.map(id => new ObjectId(id)) } },
         { projection :{password:0}},
-      )
-      .toArray();
+    ).sort({ _id: -1 }).limit(limit).toArray();
+    
+    const nextCursor = friends.length === limit ? friends[friends.length -1]._id : null
 
-    res.send(friends)
+    res.send({friends,nextCursor})
    
   } catch (error) {
     console.log(error);
