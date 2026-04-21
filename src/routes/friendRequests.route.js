@@ -55,9 +55,11 @@ router.post('/', async (req, res) => {
  try {
    const db = getDB();
    const { senderId: userId, receiverId: id } = req.body;
+  
    if (!userId || !id) {
      return res.status(400).send({ message: 'id messing' });
    }
+   
    if (userId === id) {
      return res.status(400).send({ message: 'You can not send request to yourself' });
    }
@@ -71,6 +73,7 @@ router.post('/', async (req, res) => {
    if (requestFnd) {
      return res.status(400).send({ message: 'already send request' });
    }
+    
    const newRequest = {
      senderId: userId,
      receiverId: id,

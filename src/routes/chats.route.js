@@ -182,7 +182,7 @@ router.post('/send-message', async (req, res) => {
       receiverId,
       message,
       isRequest,
-      seen:false,
+      status:'sent',
       createdAt: new Date()
     };
 

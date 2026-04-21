@@ -26,33 +26,91 @@ io.on('connection', socket => {
 
   // if user connect  then run
   socket.on('join', userId => {
-    users[userId] = socket.id;
+
+    if (!users[userId]) {
+      users[userId]=[]
+    }
+     users[userId].push(socket.id)
+
+    io.emit('user-status', {
+      userId,
+      status:'online'
+    })
+    
+  });
+
+  // typing include
+  socket.on('typing', ({senderId,receiverId}) => {
+     if (!senderId || !receiverId) {
+       console.log('Invalid message data');
+       return;
+    } 
+    
+    const receivedSocketId = users[receiverId];
+    if (receivedSocketId) {
+      receivedSocketId.forEach(id => {
+        io.to(id).emit('typing', {
+          senderId
+        })
+      })
+    }
+  })
+
+  // stop typing 
+  socket.on('stopTyping', ({ senderId, receiverId }) => {
+     if (!senderId || !receiverId) {
+       console.log('Invalid message data');
+       return;
+    } 
+
+   
+    const receivedSocketId = users[receiverId];
+    if (receivedSocketId) {
+      receivedSocketId.forEach(id => {
+        io.to(id).emit('stopTyping', {
+          senderId,
+        });
+      });
+    }
     
   });
 
   // send message
   socket.on('sendMessage',(data) => {
     const { senderId, receiverId, message } = data;
-    if (!senderId || !receiverId || !message) return;
+    if (!senderId || !receiverId || !message) {
+      console.log('Invalid message data');
+      return;
+    } 
     const receiverSocketId = users[receiverId];
    if (receiverSocketId) {
-      socket.to(receiverSocketId).emit('receiveMessage', {
-        senderId,
-        message,
-        receiverId,
-        createdAt: new Date(),
-        
-        
-      });
+     receiverSocketId.forEach(id => {
+        io.to(id).emit('receiveMessage', {
+          senderId,
+          message,
+          receiverId,
+          createdAt: new Date(),
+        });
+      })
     }
   });
 
   // when user disconnect
   socket.on('disconnect', () => {
-    for (let id in users) {
-      if (users[id] === socket.id) {
-        delete users[id];
+    for (let userId in users) {
+      users[userId]=users[userId].filter(id=> id !== socket.id)
+      if (users[userId].length === 0) {
+        delete users[userId];
+
+        io.emit('user-status', {
+          userId: userId,
+          status:'offline'
+          
+        });
+       
       }
+
+      
     }
   })
 });
