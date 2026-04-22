@@ -63,15 +63,16 @@ router.get('/chat-list', async (req, res) => {
     if (!userId) {
       return res.status(400).send({ message: 'id is missing' });
     }
+     const limit = 10;
     const query = {
       $and: [
         {
           $or: [{ senderId: userId }, { receiverId: userId, isRequest: false }],
         },
-        cursor ? {_id:{$lt:new ObjectId(cursor)}} : {}
+         ...(  cursor && {_id:{$lt:new ObjectId(cursor)}} ),
       ],
     };
-    const messages = await db.collection('messages').find(query).sort({ createdAt: -1 }).toArray();
+    const messages = await db.collection('messages').find(query).sort({ createdAt: -1 }).limit(limit).toArray();
     if (messages.length === 0) {
       return res.send({usersChat:[],nextCursor:null});
     }
@@ -83,11 +84,11 @@ router.get('/chat-list', async (req, res) => {
     ];
     
     
-    const limit = 10;
+   
     const secondQuery = {
       _id: { $in: findMessageId.map(id => new ObjectId(id)) },
     };
-    const users = await db.collection('userCollection').find(secondQuery, { projection: { password: 0 } }).sort({createAt: -1}).limit(limit).toArray();
+    const users = await db.collection('userCollection').find(secondQuery, { projection: { password: 0 } }).sort({createAt: -1}).toArray();
     
     const chatList = users.map((user) => {
       const userMessages = messages.filter(m => (m.senderId === userId && m.receiverId === user._id.toString()) || (m.senderId === user._id.toString() && m.receiverId === userId));
@@ -100,7 +101,7 @@ router.get('/chat-list', async (req, res) => {
     })
     
 
-    const nextCursor = users.length === limit ? users[users.length -1]._id:null
+    const nextCursor = messages.length === limit ? messages[messages.length -1]._id:null
       
 
 
@@ -116,23 +117,28 @@ router.get('/chat-list', async (req, res) => {
 router.get('/message-request-list', async (req, res) => {
   try {
     const db = getDB();
-    const { userId } = req.query;
+    const { userId,cursor } = req.query;
     if (!userId) {
       return res.status(400).send({ message: 'id is missing' });
     }
-    const query = {receiverId: userId ,isRequest:true};
-    const isFriendRequest = await db.collection('messages').find(query).sort({createdAt: -1}).toArray();
-     if (isFriendRequest.length === 0) {
+    const limit =6
+    const query = {
+      $and: [{ receiverId: userId, isRequest: true },
+        ...(cursor && {_id:{$lt:new ObjectId(cursor)}} ),
+      ],
+    }; 
+    const isMessageRequest = await db.collection('messages').find(query).sort({createdAt: -1}).limit(limit).toArray();
+     if (isMessageRequest.length === 0) {
        return res.send([]);
      }
-    const RequesterId = isFriendRequest.map(r => r.senderId);
+    const RequesterId = isMessageRequest.map(r => r.senderId);
 
     const sedQuery={_id:{$in:RequesterId.map(id=> new ObjectId(id))}}
 
     const isRequesterUsers = await db.collection('userCollection').find(sedQuery, { projection: { password: 0 } }).toArray()
 
     const users = isRequesterUsers.map(user => {
-      const  userMessages = isFriendRequest.filter(meg => meg.senderId === user._id.toString() && meg.isRequest === true);
+      const  userMessages = isMessageRequest.filter(meg => meg.senderId === user._id.toString() && meg.isRequest === true);
       const lastMessage = userMessages[0];
       return {
         ...user,
@@ -140,7 +146,9 @@ router.get('/message-request-list', async (req, res) => {
         lastSeen:lastMessage?.createdAt
       }
     })
-    res.send(users)
+
+     const nextCursor = isMessageRequest.length === limit ? isMessageRequest[isMessageRequest.length - 1]._id : null;
+    res.send({users,nextCursor})
     
   } catch (error) {
     console.log(error);

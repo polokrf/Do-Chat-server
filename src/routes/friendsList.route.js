@@ -20,20 +20,27 @@ router.get('/', async (req, res) => {
             { receiverId: userId, status: 'accepted' },
           ],
         },
-        cursor ? {_id:{$lt:new ObjectId(cursor)}} : {}
+        ...(cursor && { _id: { $lt: new ObjectId(cursor) } }),
       ],
     };
     const limit =10
-    const friendsList = await db.collection('friendRequests').find(query).toArray();
+    const friendsList = await db.collection('friendRequests').find(query).sort({ _id: -1 }).limit(limit) .toArray();
     const friendsId = friendsList.map(f => f.senderId === userId ? f.receiverId : f.senderId);
     const friends = await db.collection('userCollection').find(
         { _id: { $in: friendsId.map(id => new ObjectId(id)) } },
         { projection :{password:0}},
-    ).sort({ _id: -1 }).limit(limit).toArray();
-    
-    const nextCursor = friends.length === limit ? friends[friends.length -1]._id : null
+    ).toArray();
 
-    res.send({friends,nextCursor})
+    const userMap = {};
+    friends.forEach(user => {
+      userMap[user._id.toString()] = user;
+    });
+
+    const orderedFriends = friendsId.map(id => userMap[id]);
+    
+    const nextCursor = friendsList.length === limit ? friendsList[friendsList.length -1]._id : null
+
+    res.send({friends:orderedFriends,nextCursor})
    
   } catch (error) {
     console.log(error);

@@ -21,7 +21,10 @@ const connectDB = async()=> {
    await client.connect();
     db = client.db('chat-app');
 
-   console.log('MongoDB connected!');
+    console.log('MongoDB connected!');
+    await db.collection('userCollection').createIndex({ email: 1 }, { unique: true });
+
+     
   }catch(error){
    console.log(error)
   }

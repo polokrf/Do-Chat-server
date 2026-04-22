@@ -83,21 +83,21 @@ router.post('/register', async (req, res) => {
   try {
     const db=getDB()
     const body = req.body;
-    if (!body.email) {
-      return res.send({ message: 'plz give your email' });
+    const { email}=req.body
+    if (!body.email || !body.password) {
+      return res.status(400).send({ message: 'plz give your email and password' });
     }
-    if (!body.password) {
-      return res.send({ message: 'plz give password' });
-    }
-    const query = { email: body.email };
+    const normalizedEmail = email.toLowerCase().trim();
+
+    const query = { email:normalizedEmail };
     const user = await db.collection('userCollection').findOne(query)
     if (user) {
-        return res.send({ message: 'User already exists' });
+        return res.status(400).send({ message: 'User already exists' });
       }
     const hashedPassword = await bcrypt.hash(body.password, 12);
 
     const newUser = {
-      email: body.email,
+      email: normalizedEmail,
       password: hashedPassword,
       name: body.name,
       image: body.image,
