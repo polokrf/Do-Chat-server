@@ -18,6 +18,9 @@ const io = new Server(server, {
   }
 });
 
+
+  
+
 //get user id and convert socket.id
 const users = {};
 
@@ -26,44 +29,47 @@ io.on('connection', socket => {
 
   // if user connect  then run
   socket.on('join', userId => {
-
     if (!users[userId]) {
-      users[userId]=[]
+      users[userId] = [];
     }
-     users[userId].push(socket.id)
+    // duplicate prevent
+    if (!users[userId].includes(socket.id)) {
+      users[userId].push(socket.id);
+    }
 
+    //  send all online users to this new tab
+    socket.emit('all-users', Object.keys(users));
+    
     io.emit('user-status', {
       userId,
-      status:'online'
-    })
-    
+      status: 'online',
+    });
   });
 
   // typing include
-  socket.on('typing', ({senderId,receiverId}) => {
-     if (!senderId || !receiverId) {
-       console.log('Invalid message data');
-       return;
-    } 
-    
+  socket.on('typing', ({ senderId, receiverId }) => {
+    if (!senderId || !receiverId) {
+      console.log('Invalid message data');
+      return;
+    }
+
     const receivedSocketId = users[receiverId];
     if (receivedSocketId) {
       receivedSocketId.forEach(id => {
         io.to(id).emit('typing', {
-          senderId
-        })
-      })
+          senderId,
+        });
+      });
     }
-  })
+  });
 
-  // stop typing 
+  // stop typing
   socket.on('stopTyping', ({ senderId, receiverId }) => {
-     if (!senderId || !receiverId) {
-       console.log('Invalid message data');
-       return;
-    } 
+    if (!senderId || !receiverId) {
+      console.log('Invalid message data');
+      return;
+    }
 
-   
     const receivedSocketId = users[receiverId];
     if (receivedSocketId) {
       receivedSocketId.forEach(id => {
@@ -72,47 +78,43 @@ io.on('connection', socket => {
         });
       });
     }
-    
   });
 
   // send message
-  socket.on('sendMessage',(data) => {
+  socket.on('sendMessage', data => {
     const { senderId, receiverId, message } = data;
     if (!senderId || !receiverId || !message) {
       console.log('Invalid message data');
       return;
-    } 
+    }
     const receiverSocketId = users[receiverId];
-   if (receiverSocketId) {
-     receiverSocketId.forEach(id => {
+    if (receiverSocketId) {
+      receiverSocketId.forEach(id => {
         io.to(id).emit('receiveMessage', {
           senderId,
           message,
           receiverId,
           createdAt: new Date(),
         });
-      })
+      });
     }
   });
 
-  // when user disconnect
-  socket.on('disconnect', () => {
-    for (let userId in users) {
-      users[userId]=users[userId].filter(id=> id !== socket.id)
-      if (users[userId].length === 0) {
-        delete users[userId];
+ 
 
-        io.emit('user-status', {
-          userId: userId,
-          status:'offline'
-          
-        });
+  // Disconnect হলে
+  socket.on('disconnect', () => {
+    for (const userId in users) {
+      users[userId] = users[userId].filter(id => id !== socket.id);
+      if (users[userId].length === 0) {
+        io.emit('user-status', { userId, status: 'offline' });
+        delete users[userId];
        
       }
-
-      
     }
-  })
+
+    
+  });
 });
 
 
