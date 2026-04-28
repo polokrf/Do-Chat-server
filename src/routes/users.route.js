@@ -28,6 +28,23 @@ router.get('/', async (req, res) => {
 
 
 
+// get only user 
+router.get('/only-one-user', async (req,res) => {
+   try {
+    const db = getDB();
+     const { userId } = req.query;
+     if (!userId) {
+       res.status(400).send({ message: 'error' })
+       return
+     }
+    const query = { _id: new ObjectId(userId) };
+    
+    res.send(result);
+   } catch (error) {
+     console.log(error)
+     res.status(500).send({message:'server error'})
+   }
+ })
 
 
 

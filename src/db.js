@@ -23,6 +23,17 @@ const connectDB = async()=> {
 
     console.log('MongoDB connected!');
     await db.collection('userCollection').createIndex({ email: 1 }, { unique: true });
+    await db.collection('notifications').createIndex(
+      {
+        senderId: 1,
+        receiverId: 1,
+        type: 1,
+        isRead: 1,
+      },
+      {
+        unique: true,
+      },
+    );
 
      
   }catch(error){

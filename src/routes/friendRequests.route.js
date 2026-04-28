@@ -80,7 +80,18 @@ router.post('/', async (req, res) => {
      status: 'pending',
    };
 
+   const newNotifications = {
+     senderId: userId,
+     receiverId:id,
+     type:'friend request',
+     isRead: false,
+     url: `/dashboard?tab=requests`,
+     message: 'sent a new friend Request',
+     createdAt: new Date(),
+   };
+
    const result = await db.collection('friendRequests').insertOne(newRequest);
+   const notifications = await db.collection('notifications').insertOne(newNotifications)
    res.send(result);
 
  } catch (error) {
@@ -116,7 +127,17 @@ router.patch('/accept', async (req, res) => {
         isRequest:false,
       }
     }
-    const messRequestUpdate = await db.collection('messages').updateMany(scQuery,scUpdate)
+    const messRequestUpdate = await db.collection('messages').updateMany(scQuery, scUpdate)
+    const newNotifications = {
+      senderId: userId,
+      receiverId: targetId,
+      isRead: false,
+      type:'accept friend request',
+      url:`/dashboard?tab=friends`,
+      message: 'accept a friend Request',
+      createdAt: new Date(),
+    };
+    const notifications = await db.collection('notifications').insertOne(newNotifications);
     res.send(result);
   } catch (error) {
     

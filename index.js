@@ -3,6 +3,7 @@ require('dotenv').config();
 const app = require('./src/app');
 const { connectDB, getDB } = require('./src/db'); //server connect
 const { Server } = require('socket.io');
+const { ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 
 // socket io connect
@@ -81,9 +82,10 @@ io.on('connection', socket => {
   });
 
   // send message
-  socket.on('sendMessage', data => {
+  socket.on('sendMessage',( data) => {
+    
     const { senderId, receiverId, message } = data;
-    if (!senderId || !receiverId || !message) {
+    if (!senderId || !receiverId || !message ) {
       console.log('Invalid message data');
       return;
     }
@@ -92,14 +94,52 @@ io.on('connection', socket => {
       receiverSocketId.forEach(id => {
         io.to(id).emit('receiveMessage', {
           senderId,
-          message,
           receiverId,
+          message,
           createdAt: new Date(),
         });
       });
     }
+
+     
   });
 
+  // notifications 
+  socket.on('sentNotification',async (data) => {
+    
+    const db=getDB()
+    const { receiverId, senderId, type,url,message } = data;
+    if (!receiverId || !senderId || !type || !url) {
+      console.log('Invalid notification data');
+      return;
+    }
+    const sender = await db.collection('userCollection').findOne(
+        { _id: new ObjectId(senderId) },
+        { projection: { name: 1, image: 1,_id:1 } },
+      );
+    console.log(sender)
+    console.log(receiverId)
+    const receiverSocketId = users[receiverId];
+    console.log('socketRecived id pw gece', receiverSocketId);
+    if (receiverSocketId) {
+       console.log('socketRecived id pw gece',receiverSocketId)
+      receiverSocketId.forEach((id) => {
+        io.to(id).emit('receiveNotifications', {
+          senderId,
+          receiverId,
+          type,
+          message,
+          url,
+          createdAt: new Date(),
+          senderInfo: {
+            _id: sender._id,
+            name: sender.name,
+            image: sender.image,
+          },
+        });
+     })
+    }
+  })
  
 
   // Disconnect হলে

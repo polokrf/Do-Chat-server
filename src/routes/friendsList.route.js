@@ -13,16 +13,16 @@ router.get('/', async (req, res) => {
        return res.status(400).send({ message: 'Missing id' });
      }
     const query = {
-      $and: [
-        {
-          $or: [
+      $or: [
             { senderId: userId, status: 'accepted' },
             { receiverId: userId, status: 'accepted' },
-          ],
-        },
-        ...(cursor && { _id: { $lt: new ObjectId(cursor) } }),
-      ],
-    };
+          ]
+        }
+        
+     if (cursor) {
+      query._id = { $lt: new ObjectId(cursor) };
+    }
+      
     const limit =10
     const friendsList = await db.collection('friendRequests').find(query).sort({ _id: -1 }).limit(limit) .toArray();
     const friendsId = friendsList.map(f => f.senderId === userId ? f.receiverId : f.senderId);
