@@ -1,10 +1,12 @@
 const express = require('express');
 const { getDB } = require('../db');
 const { ObjectId } = require('mongodb');
+const { verifyJWT } = require('../../middlewear');
+
 const router = express.Router();
 
 // search then get all users
-router.get('/', async (req, res) => {
+router.get('/', verifyJWT, async (req, res) => {
   const db = getDB();
   const { name, cursor } = req.query;
   
@@ -29,7 +31,7 @@ router.get('/', async (req, res) => {
 
 
 // get only user 
-router.get('/only-one-user', async (req,res) => {
+router.get('/only-one-user',verifyJWT, async (req,res) => {
    try {
     const db = getDB();
      const { userId } = req.query;

@@ -1,7 +1,3 @@
-// doChat
-// Yn0MCuP1wNkvkpn6
-
-
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const uri = process.env.DBURl;
 

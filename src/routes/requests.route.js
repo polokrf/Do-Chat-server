@@ -1,10 +1,11 @@
 const express = require('express');
 const { getDB } = require('../db');
 const { ObjectId } = require('mongodb');
+const { verifyJWT } = require('../../middlewear');
 const router = express.Router();
 
 // my request get 
-router.get('/my-request', async (req, res) => {
+router.get('/my-request',verifyJWT, async (req, res) => {
   try {
     const db = getDB();
     const { userId,cursor } = req.query;
@@ -35,7 +36,7 @@ router.get('/my-request', async (req, res) => {
 })
 
 // user request 
-router.get('/user-request', async (req, res) => {
+router.get('/user-request',verifyJWT, async (req, res) => {
   try {
     const db = getDB();
     const { userId,cursor } = req.query;

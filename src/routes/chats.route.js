@@ -1,6 +1,7 @@
 const express = require('express');
 const { getDB } = require('../db');
 const { ObjectId } = require('mongodb');
+const { verifyJWT } = require('../../middlewear');
 const router = express.Router();
 
 // do you chat with who user
@@ -67,7 +68,7 @@ router.get('/messages', async (req, res) => {
 
 // When a user starts chatting with someone, that person should be added to the chat list
 
-router.get('/chat-list', async (req, res) => {
+router.get('/chat-list', verifyJWT, async (req, res) => {
   try {
     const db = getDB();
     const { userId, cursor } = req.query;
@@ -139,7 +140,7 @@ router.get('/chat-list', async (req, res) => {
 
 // message request list
 
-router.get('/message-request-list', async (req, res) => {
+router.get('/message-request-list',verifyJWT, async (req, res) => {
   try {
     const db = getDB();
     const { userId,cursor } = req.query;
@@ -185,7 +186,7 @@ router.get('/message-request-list', async (req, res) => {
 
 
 // send message  and message request
-router.post('/send-message', async (req, res) => {
+router.post('/send-message',verifyJWT, async (req, res) => {
   try {
     const db = getDB();
    const { senderId, receiverId,message} = req.body;
@@ -231,7 +232,7 @@ router.post('/send-message', async (req, res) => {
 
 
 // message request accept or delete 
-router.patch('/accept-delete', async (req, res) => {
+router.patch('/accept-delete',verifyJWT, async (req, res) => {
   try {
     const db = getDB();
     const { userId, requestId, action } = req.body;

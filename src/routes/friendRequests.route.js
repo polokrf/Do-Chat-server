@@ -1,11 +1,12 @@
 const express = require('express');
 const { getDB } = require('../db');
 const { ObjectId } = require('mongodb');
+const { verifyJWT } = require('../../middlewear');
 const router = express.Router();
 
 
 // get sender request
-router.get('/senderRequest', async (req, res) => {
+router.get('/senderRequest',verifyJWT, async (req, res) => {
  try {
    const db = getDB();
    const { userId } = req.query;
@@ -19,7 +20,7 @@ router.get('/senderRequest', async (req, res) => {
 
 })
 // get Received request
-router.get('/received', async (req, res) => {
+router.get('/received',verifyJWT, async (req, res) => {
   try {
     const db = getDB();
     const { userId } = req.query;
@@ -32,7 +33,7 @@ router.get('/received', async (req, res) => {
   }
 });
 // get friends 
-router.get('/friends', async (req, res) => {
+router.get('/friends',verifyJWT, async (req, res) => {
   try {
     const db = getDB();
     const { userId } = req.query;
@@ -51,7 +52,7 @@ router.get('/friends', async (req, res) => {
 });
 
 // send friend requests
-router.post('/', async (req, res) => {
+router.post('/',verifyJWT, async (req, res) => {
  try {
    const db = getDB();
    const { senderId: userId, receiverId: id } = req.body;
@@ -101,7 +102,7 @@ router.post('/', async (req, res) => {
 })
 
 // we  want to accept friend request
-router.patch('/accept', async (req, res) => {
+router.patch('/accept', verifyJWT, async (req, res) => {
   try {
     const db = getDB();
     const { userId, targetId } = req.body;

@@ -1,11 +1,12 @@
 const express = require('express');
 const { getDB } = require('../db');
 const { ObjectId } = require('mongodb');
+const { verifyJWT } = require('../../middlewear');
 const router = express.Router();
 
 // own friends get
 
-router.get('/', async (req, res) => {
+router.get('/',verifyJWT, async (req, res) => {
   try {
     const db = getDB();
     const { userId,cursor } = req.query;

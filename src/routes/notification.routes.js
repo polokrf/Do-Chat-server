@@ -2,9 +2,10 @@
 const express = require('express');
 const { getDB } = require('../db');
 const { ObjectId } = require('mongodb');
+const { verifyJWT } = require('../../middlewear');
 const router = express.Router();
 
-router.get('', async (req, res) => {
+router.get('',verifyJWT, async (req, res) => {
   try {
     const db = getDB();
     const { userId, cursor } = req.query;
@@ -42,7 +43,7 @@ router.get('', async (req, res) => {
 })
 
 // update notification status isRead false to true;
-router.patch('/update-isRead', async (req, res) => {
+router.patch('/update-isRead',verifyJWT, async (req, res) => {
   try {
     const db = getDB();
     const { id } = req.body;

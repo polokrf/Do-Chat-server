@@ -2,6 +2,7 @@ const express = require('express');
 const { getDB } = require('../db');
 const router = express.Router();
 const bcrypt = require("bcryptjs");
+const jwt = require('jsonwebtoken');
 
 // login 
 router.post('/login', async (req, res) => {
@@ -9,10 +10,10 @@ router.post('/login', async (req, res) => {
     const db = getDB();
     const { password, email } = req.body;
     if (!email) {
-      return res.send({ message: 'Email is required' });
+      return res.status(404).send({ message: 'Email is required' });
     }
     if (!password) {
-      return res.send({ message: 'password is required' });
+      return res.status(404).send({ message: 'password is required' });
     }
 
     const query = { email: email };
@@ -36,7 +37,13 @@ router.post('/login', async (req, res) => {
       authProvider: user.authProvider,
       createAt: user.createAt,
     };
-    res.send(newData);
+
+    const token = jwt.sign(
+      {userId: user._id, email: user.email, role: user.role },
+      process.env.ACCESS_TOKEN_SECRET,
+    );
+
+    res.send({userData:newData,token});
 
   } catch (error) {
     console.log(error);
@@ -55,21 +62,30 @@ router.post('/google', async (req, res) => {
       return res.send({ message: 'plz give your email' });
     }
     const query = { email: body.email };
-    const user = await db.collection('userCollection').findOne(query)
-    if (user) {
-        return res.send({id:user?._id,role:user?.role});
-      }
-    const newUser = {
-      email: body.email,
-      name: body.name,
-      image: body.image,
-      role: 'user',
-      authProvider:body.authProvider,
-      createAt: new Date(),
-    };
-    const result = await db.collection('userCollection').insertOne(newUser)
+    let user = await db.collection('userCollection').findOne(query)
     
-    res.send({id: result?.insertedId,role:'user' });
+    if (!user) {
+      const newUser = {
+        email: body.email,
+        name: body.name,
+        image: body.image,
+        role: 'user',
+        authProvider: body.authProvider,
+        createAt: new Date(),
+      };
+      const result = await db.collection('userCollection').insertOne(newUser);
+      user = { ...newUser, _id: result.insertedId };
+   }
+    
+
+    const token = jwt.sign(
+      { userId: user._id, email: user.email, role: user.role },
+      process.env.ACCESS_TOKEN_SECRET
+    );
+
+   
+    
+    res.send({ userId: user._id, role: user.role, token });
     
 
    
